@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="畑の管理帳"/>
+<meta name="theme-color" content="#2d5a2d"/>
+<title>畑の管理帳</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:#f0f4f0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-size:15px;color:#1a2e1a;}
+.app{max-width:480px;margin:0 auto;padding:0 0 3rem;}
+.app-header{background:#2d5a2d;padding:env(safe-area-inset-top,16px) 16px 0;padding-top:calc(env(safe-area-inset-top,0px) + 16px);position:sticky;top:0;z-index:10;}
+.app-title{color:#fff;font-size:15px;font-weight:600;letter-spacing:0.05em;padding-bottom:12px;display:flex;align-items:center;gap:6px;}
+.tabs{display:flex;overflow-x:auto;gap:2px;-webkit-overflow-scrolling:touch;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:9px 14px;font-size:12px;cursor:pointer;color:rgba(255,255,255,0.65);border-radius:8px 8px 0 0;white-space:nowrap;transition:all 0.15s;background:transparent;}
+.tab.active{background:#f0f4f0;color:#2d5a2d;font-weight:600;}
+.content{padding:16px;}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);}
+.section-label{font-size:11px;font-weight:600;color:#5a7a5a;letter-spacing:0.06em;margin:16px 0 8px;padding-left:2px;}
+.char-bubble{background:linear-gradient(135deg,#2d5a2d 0%,#3d7a3d 100%);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px;box-shadow:0 2px 8px rgba(45,90,45,0.25);}
+.char-face{font-size:26px;flex-shrink:0;}
+.bubble-name{font-size:10px;color:rgba(255,255,255,0.7);margin-bottom:3px;font-weight:600;letter-spacing:0.05em;}
+.bubble-text{font-size:13px;color:#fff;line-height:1.65;}
+.today-header{font-size:12px;color:#6a8a6a;margin-bottom:10px;font-weight:500;}
+.alert-card{border-radius:12px;padding:13px 15px;margin-bottom:9px;box-shadow:0 1px 3px rgba(0,0,0,0.07);}
+.alert-card.warn{background:#fffbf0;border:1.5px solid #f0c040;}
+.alert-card.info{background:#f0fbf5;border:1.5px solid #5cc490;}
+.alert-card.done{background:#fafafa;border:1.5px solid #e0e0e0;}
+.alert-crop{font-size:13px;font-weight:600;color:#1a2e1a;margin-bottom:3px;}
+.alert-msg{font-size:12px;color:#5a6a5a;line-height:1.5;}
+.alert-day{font-size:11px;font-weight:600;margin-top:5px;}
+.alert-day.near{color:#c08010;}
+.alert-day.ok{color:#2d8a4a;}
+.record-card{background:#fff;border-radius:12px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,0.07),0 0 0 1px rgba(0,0,0,0.05);}
+.crop-icon{width:38px;height:38px;border-radius:50%;background:#e8f5e8;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;box-shadow:0 0 0 2px #c8e8c8;}
+.record-name{font-size:14px;font-weight:600;color:#1a2e1a;}
+.record-sub{font-size:11px;color:#7a9a7a;margin-top:1px;}
+.progress-bar{height:4px;border-radius:2px;background:#e0e8e0;margin-top:7px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;background:#3d9a5a;}
+.progress-fill.near{background:#c09020;}
+.progress-fill.past{background:#c04040;}
+.del-btn{font-size:11px;color:#9aaa9a;padding:4px 9px;border-radius:8px;border:1px solid #d8e8d8;cursor:pointer;flex-shrink:0;background:#f5faf5;}
+.form-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);}
+.form-label{font-size:12px;font-weight:600;color:#4a6a4a;margin-bottom:5px;margin-top:12px;}
+.form-label:first-child{margin-top:0;}
+select,input[type=text],input[type=date],textarea{width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid #d0e0d0;background:#f8fcf8;color:#1a2e1a;font-size:13px;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans',sans-serif;-webkit-appearance:none;appearance:none;transition:border-color 0.15s;}
+select:focus,input:focus,textarea:focus{outline:none;border-color:#3d9a5a;background:#fff;}
+textarea{resize:vertical;min-height:64px;}
+.submit-btn{margin-top:14px;width:100%;padding:12px;border-radius:999px;background:#2d5a2d;color:#fff;font-size:14px;font-weight:600;border:none;cursor:pointer;letter-spacing:0.03em;box-shadow:0 2px 8px rgba(45,90,45,0.3);}
+.submit-btn:active{opacity:0.85;}
+.type-toggle{display:flex;gap:8px;}
+.type-btn{flex:1;padding:10px;font-size:13px;cursor:pointer;border-radius:10px;border:1.5px solid #d0e0d0;background:#f8fcf8;color:#5a7a5a;font-weight:500;text-align:center;transition:all 0.15s;}
+.type-btn.active{background:#2d5a2d;color:#fff;border-color:#2d5a2d;font-weight:600;box-shadow:0 2px 6px rgba(45,90,45,0.25);}
+.water-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08),0 0 0 1px rgba(0,0,0,0.06);}
+.water-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.water-dot.done{background:#3d9a5a;}
+.water-dot.pending{background:#c09020;}
+.water-dot.skip{background:#c04040;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.choice-btn{flex:1;min-width:80px;padding:10px 8px;border-radius:10px;font-size:13px;cursor:pointer;border:1.5px solid #d0e0d0;background:#f8fcf8;color:#1a2e1a;font-weight:500;text-align:center;transition:all 0.12s;}
+.choice-btn.green{background:#2d5a2d;color:#fff;border-color:#2d5a2d;box-shadow:0 2px 6px rgba(45,90,45,0.25);}
+.choice-btn.amber{background:#fff8e0;color:#7a5000;border-color:#e0b030;}
+.choice-btn.red{background:#fff0f0;color:#8a2020;border-color:#e08080;}
+.choice-btn.gray{background:#f4f4f4;color:#6a6a6a;border-color:#d8d8d8;}
+.fix-btn{font-size:11px;padding:5px 12px;border-radius:999px;border:1px solid #d0e0d0;background:#f5faf5;color:#7a9a7a;cursor:pointer;margin-top:10px;display:inline-block;}
+.excuse-area{margin-top:10px;}
+.water-log-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f4f0;font-size:12px;color:#7a9a7a;}
+.water-log-item:last-child{border-bottom:none;}
+.water-log-date{min-width:50px;color:#3a5a3a;font-weight:600;}
+.pest-item{background:#fff;border-radius:12px;padding:11px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 1px 3px rgba(0,0,0,0.07),0 0 0 1px rgba(0,0,0,0.05);}
+.pest-date{font-size:11px;font-weight:600;color:#7a9a7a;min-width:52px;margin-top:2px;}
+.pest-name{font-size:13px;font-weight:600;color:#1a2e1a;}
+.pest-memo{font-size:11px;color:#7a9a7a;margin-top:2px;line-height:1.5;}
+.pest-del{font-size:11px;color:#9aaa9a;padding:4px 9px;border-radius:8px;border:1px solid #d8e8d8;cursor:pointer;flex-shrink:0;margin-left:auto;background:#f5faf5;}
+.crop-db-item{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;background:#fff;margin-bottom:7px;box-shadow:0 1px 3px rgba(0,0,0,0.07),0 0 0 1px rgba(0,0,0,0.05);}
+.db-icon{font-size:17px;width:26px;text-align:center;flex-shrink:0;}
+.db-name{font-size:13px;font-weight:600;color:#1a2e1a;flex:1;}
+.db-days{font-size:11px;color:#7a9a7a;white-space:nowrap;}
+.db-category{font-size:10px;padding:2px 7px;border-radius:999px;margin-left:4px;font-weight:600;}
+.db-cat-veg{background:#e0f5e0;color:#2d6a2d;}
+.db-cat-fruit{background:#fff0d0;color:#7a4000;}
+.db-edit-btn{font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid #d0e0d0;cursor:pointer;background:#f5faf5;color:#5a7a5a;flex-shrink:0;}
+.db-del-btn{font-size:11px;padding:4px 9px;border-radius:8px;border:1px solid #e0b0b0;cursor:pointer;background:#fff0f0;color:#8a2020;flex-shrink:0;}
+.edit-form{background:#f8fcf8;border-radius:10px;padding:12px;margin-top:4px;margin-bottom:8px;border:1.5px solid #d0e8d0;}
+.edit-form input,.edit-form select{margin-bottom:7px;}
+.edit-row{display:flex;gap:8px;}
+.edit-row input{flex:1;}
+.edit-save-btn{padding:7px 18px;border-radius:999px;font-size:12px;background:#2d5a2d;color:#fff;border:none;cursor:pointer;margin-right:6px;font-weight:600;}
+.edit-cancel-btn{padding:7px 18px;border-radius:999px;font-size:12px;background:#fff;color:#5a7a5a;border:1px solid #d0e0d0;cursor:pointer;}
+.row2{display:flex;gap:8px;}
+.row2 input{flex:1;}
+.add-custom-btn{margin-top:10px;padding:9px 18px;border-radius:999px;font-size:12px;border:1.5px solid #2d5a2d;background:#fff;color:#2d5a2d;cursor:pointer;font-weight:600;}
+.type-badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:999px;margin-left:4px;font-weight:600;}
+.badge-seed{background:#e0f5e0;color:#2d6a2d;}
+.badge-seedling{background:#fff0d0;color:#7a4000;}
+.empty-msg{text-align:center;padding:2.5rem 1rem;color:#8aaa8a;font-size:13px;line-height:1.8;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-header">
+    <div class="app-title">🌿 畑の管理帳</div>
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('today')">今日の畑</div>
+      <div class="tab" onclick="showTab('water')">水やり</div>
+      <div class="tab" onclick="showTab('pest')">農薬</div>
+      <div class="tab" onclick="showTab('records')">作付記録</div>
+      <div class="tab" onclick="showTab('add')">記録する</div>
+      <div class="tab" onclick="showTab('db')">作物データ</div>
+    </div>
+  </div>
+  <div class="content">
+    <div id="tab-today">
+      <div id="char-bubble-area"></div>
+      <div class="today-header" id="today-date"></div>
+      <div id="today-list"></div>
+    </div>
+    <div id="tab-water" style="display:none;">
+      <div id="water-main"></div>
+      <div class="section-label">水やり履歴</div>
+      <div id="water-log"></div>
+    </div>
+    <div id="tab-pest" style="display:none;">
+      <div class="form-card">
+        <div class="form-label">日付</div>
+        <input type="date" id="pest-date"/>
+        <div class="form-label">農薬名</div>
+        <input type="text" id="pest-name" placeholder="例: ダコニール、スミチオン"/>
+        <div class="form-label">メモ（任意）</div>
+        <textarea id="pest-memo" placeholder="例: トマト・なす全体に散布、希釈500倍"></textarea>
+        <button class="submit-btn" onclick="addPest()">記録する</button>
+      </div>
+      <div class="section-label">農薬使用履歴</div>
+      <div id="pest-list"></div>
+    </div>
+    <div id="tab-records" style="display:none;">
+      <div class="section-label">作付記録一覧</div>
+      <div id="record-list"></div>
+    </div>
+    <div id="tab-add" style="display:none;">
+      <div class="form-card">
+        <div class="form-label">作物を選ぶ</div>
+        <select id="add-crop-select"></select>
+        <div class="form-label">種・苗</div>
+        <div class="type-toggle">
+          <button class="type-btn active" id="type-seed" onclick="setType('seed')">🌱 種</button>
+          <button class="type-btn" id="type-seedling" onclick="setType('seedling')">🪴 苗</button>
+        </div>
+        <div class="form-label">作付日</div>
+        <input type="date" id="add-date"/>
+        <div class="form-label">メモ（任意）</div>
+        <input type="text" id="add-memo" placeholder="例: 第2圃場、Aロット"/>
+        <button class="submit-btn" onclick="addRecord()">記録する</button>
+      </div>
+    </div>
+    <div id="tab-db" style="display:none;">
+      <div class="section-label">作物データ一覧</div>
+      <div id="db-list"></div>
+      <div class="section-label">作物を追加</div>
+      <div class="form-card">
+        <input type="text" id="new-name" placeholder="作物名（例: スイカ）" style="margin-bottom:8px;"/>
+        <div class="row2">
+          <input type="text" id="new-germ" placeholder="発芽日数（例: 7）"/>
+          <input type="text" id="new-harvest" placeholder="収穫目安（例: 90）"/>
+        </div>
+        <select id="new-cat" style="margin-top:8px;">
+          <option value="veg">野菜</option>
+          <option value="fruit">果菜</option>
+        </select>
+        <button class="add-custom-btn" onclick="addCustomCrop()">追加する</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const todayD=new Date();todayD.setHours(0,0,0,0);
+const todayStr=todayD.toISOString().split('T')[0];
+const nowH=new Date().getHours();
+const SK_RECORDS='tane_records_v3';
+const SK_CROPS='tane_crops_v3';
+const SK_WATER='tane_water_v3';
+const SK_PEST='tane_pest_v1';
+const DEFAULT_CROPS=[
+  {id:'komatsuna',name:'小松菜',icon:'🥬',germ:4,harvest:40,cat:'veg'},
+  {id:'spinach',name:'ほうれん草',icon:'🌿',germ:7,harvest:50,cat:'veg'},
+  {id:'radish',name:'ラディッシュ',icon:'🌱',germ:4,harvest:25,cat:'veg'},
+  {id:'carrot',name:'にんじん',icon:'🥕',germ:10,harvest:100,cat:'veg'},
+  {id:'daikon',name:'大根',icon:'🌱',germ:5,harvest:60,cat:'veg'},
+  {id:'turnip',name:'かぶ',icon:'🌱',germ:5,harvest:50,cat:'veg'},
+  {id:'lettuce',name:'レタス',icon:'🥗',germ:5,harvest:60,cat:'veg'},
+  {id:'cabbage',name:'キャベツ',icon:'🥦',germ:5,harvest:90,cat:'veg'},
+  {id:'broccoli',name:'ブロッコリー',icon:'🥦',germ:5,harvest:90,cat:'veg'},
+  {id:'onion',name:'玉ねぎ',icon:'🧅',germ:10,harvest:180,cat:'veg'},
+  {id:'leek',name:'長ネギ',icon:'🌿',germ:10,harvest:120,cat:'veg'},
+  {id:'edamame',name:'枝豆',icon:'🫘',germ:7,harvest:80,cat:'veg'},
+  {id:'basil',name:'バジル',icon:'🌿',germ:7,harvest:60,cat:'veg'},
+  {id:'shiso',name:'大葉（しそ）',icon:'🌿',germ:7,harvest:60,cat:'veg'},
+  {id:'ginger',name:'しょうが',icon:'🌱',germ:21,harvest:150,cat:'veg'},
+  {id:'potato',name:'じゃがいも',icon:'🥔',germ:14,harvest:100,cat:'veg'},
+  {id:'sweetpotato',name:'さつまいも',icon:'🍠',germ:14,harvest:120,cat:'veg'},
+  {id:'cucumber',name:'きゅうり',icon:'🥒',germ:5,harvest:60,cat:'fruit'},
+  {id:'tomato',name:'トマト',icon:'🍅',germ:7,harvest:80,cat:'fruit'},
+  {id:'minito',name:'ミニトマト',icon:'🍅',germ:7,harvest:75,cat:'fruit'},
+  {id:'eggplant',name:'なす',icon:'🍆',germ:10,harvest:75,cat:'fruit'},
+  {id:'pepper',name:'ピーマン',icon:'🫑',germ:10,harvest:80,cat:'fruit'},
+  {id:'pumpkin',name:'かぼちゃ',icon:'🎃',germ:7,harvest:100,cat:'fruit'},
+  {id:'watermelon',name:'スイカ',icon:'🍉',germ:7,harvest:90,cat:'fruit'},
+  {id:'corn',name:'とうもろこし',icon:'🌽',germ:5,harvest:85,cat:'fruit'},
+  {id:'strawberry',name:'いちご',icon:'🍓',germ:14,harvest:180,cat:'fruit'},
+];
+function load(k,d){try{const s=localStorage.getItem(k);return s?JSON.parse(s):d;}catch(e){return d;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+let crops=load(SK_CROPS,DEFAULT_CROPS.slice());
+let records=load(SK_RECORDS,[]);
+let waterLog=load(SK_WATER,[]);
+let pestLog=load(SK_PEST,[]);
+let selectedType='seed';
+function setType(t){selectedType=t;document.getElementById('type-seed').classList.toggle('active',t==='seed');document.getElementById('type-seedling').classList.toggle('active',t==='seedling');}
+function daysDiff(ds){const d=new Date(ds);d.setHours(0,0,0,0);return Math.floor((todayD-d)/86400000);}
+function getTodayWater(){return waterLog.find(w=>w.date===todayStr)||null;}
+function getAlertMsg(rec){
+  const crop=crops.find(c=>c.id===rec.cropId);if(!crop)return null;
+  const e=daysDiff(rec.date);const{germ,harvest}=crop;
+  const isSeedling=rec.type==='seedling';
+  if(e<0)return{type:'info',msg:`作付は${Math.abs(e)}日後です。`,day:null};
+  if(e===0)return{type:'info',msg:`今日${isSeedling?'定植':'種まき'}しましたね！記録しました。`,day:'今日'};
+  if(!isSeedling){
+    if(e<germ-1)return{type:'info',msg:`発芽まであと${germ-e}日ほど。引き続き水やりを。`,day:`${e}日目`};
+    if(e>=germ-1&&e<=germ+2)return{type:'warn',msg:'そろそろ発芽する頃です。畑を見に行ってみましょう！',day:`${e}日目（発芽予定±2日）`};
+  }
+  if(e<harvest*0.8)return{type:'done',msg:isSeedling?'定植後、順調に育っていますように。':'発芽済みの頃。順調に育っていますように。',day:`${e}日目`};
+  if(e>=harvest*0.8&&e<=harvest+10)return{type:'warn',msg:'収穫時期が近づいています！そろそろ確認を。',day:`${e}日目（収穫目安：${harvest}日）`};
+  if(e>harvest+10)return{type:'warn',msg:'収穫目安を過ぎました。早めに確認してください。',day:`${e}日目（収穫目安超過）`};
+  return{type:'done',msg:'記録中です。',day:`${e}日目`};
+}
+function renderToday(){
+  const wc=records.filter(r=>{const a=getAlertMsg(r);return a&&a.type==='warn';}).length;
+  const tw=getTodayWater();
+  let msgs=[];
+  if(wc>0)msgs.push(`${wc}件の畑からお知らせがあります。`);
+  if(!tw&&nowH>=12)msgs.push('本日の水やりがまだ記録されていません。');
+  if(tw&&tw.status==='pending'&&nowH>=20)msgs.push('水やり、その後いかがでしたか？');
+  const msg=msgs.length>0?msgs.join(' '):records.length===0?'まだ作付記録がありません。「記録する」から追加してください。':'本日も畑の管理、お疲れ様でございます。';
+  document.getElementById('char-bubble-area').innerHTML=`<div class="char-bubble"><div class="char-face">🎩</div><div><div class="bubble-name">執事ヴィンセント</div><div class="bubble-text">${msg}</div></div></div>`;
+  document.getElementById('today-date').textContent=`${todayD.getFullYear()}年${todayD.getMonth()+1}月${todayD.getDate()}日`;
+  const list=document.getElementById('today-list');
+  if(records.length===0){list.innerHTML='<div class="empty-msg">まだ記録がありません。<br>「記録する」タブから作付日を登録しましょう。</div>';return;}
+  const sorted=[...records].sort((a,b)=>{const o={warn:0,info:1,done:2};return(o[getAlertMsg(a)?.type]||2)-(o[getAlertMsg(b)?.type]||2);});
+  list.innerHTML=sorted.map(rec=>{
+    const a=getAlertMsg(rec);const crop=crops.find(c=>c.id===rec.cropId);if(!a||!crop)return'';
+    const dc=a.type==='warn'?'near':a.type==='info'?'ok':'';
+    const badge=rec.type==='seedling'?'<span class="type-badge badge-seedling">苗</span>':'<span class="type-badge badge-seed">種</span>';
+    return`<div class="alert-card ${a.type}"><div style="display:flex;align-items:center;gap:10px;"><span style="font-size:22px;">${crop.icon}</span><div style="flex:1;"><div class="alert-crop">${crop.name}${badge}${rec.memo?` <span style="font-size:11px;color:#8aaa8a;">${rec.memo}</span>`:''}</div><div class="alert-msg">${a.msg}</div>${a.day?`<div class="alert-day ${dc}">${a.day}</div>`:''}</div></div></div>`;
+  }).join('');
+}
+function recordWater(status,excuse){
+  const idx=waterLog.findIndex(w=>w.date===todayStr);
+  const entry={date:todayStr,status,excuse:excuse||'',time:new Date().toTimeString().slice(0,5)};
+  if(idx>=0)waterLog[idx]=entry;else waterLog.unshift(entry);
+  if(waterLog.length>60)waterLog=waterLog.slice(0,60);
+  save(SK_WATER,waterLog);renderWater();renderToday();
+}
+function resetTodayWater(){waterLog=waterLog.filter(w=>w.date!==todayStr);save(SK_WATER,waterLog);renderWater();renderToday();}
+function renderWater(){
+  const tw=getTodayWater();const isEvening=nowH>=20;
+  const excuseBlock=`<div id="excuse-area" class="excuse-area" style="display:none;"><textarea id="excuse-text" placeholder="例：小松菜だけしていない、雨が降ったので…"></textarea><button class="choice-btn red" style="margin-top:8px;width:100%;" onclick="submitExcuse()">今日はしない（記録する）</button></div>`;
+  let html='';
+  if(!tw){
+    const q=isEvening?'今日の水やり、いかがでしたか？':'本日の水やりはお済みでしょうか？';
+    const btns=isEvening
+      ?`<button class="choice-btn green" onclick="recordWater('done')">しました</button><button class="choice-btn gray" onclick="showExcuse()">言い訳をする</button>`
+      :`<button class="choice-btn green" onclick="recordWater('done')">はい、しました</button><button class="choice-btn amber" onclick="recordWater('pending')">あとでする</button><button class="choice-btn gray" onclick="showExcuse()">言い訳をする</button>`;
+    html=`<div class="water-card"><div style="font-size:14px;font-weight:600;color:#1a2e1a;margin-bottom:12px;">${q}</div><div class="btn-row">${btns}</div>${excuseBlock}</div>`;
+  }else if(tw.status==='pending'){
+    const inner=isEvening
+      ?`<div style="font-size:13px;color:#1a2e1a;margin-bottom:12px;">その後、水やりはできましたか？</div><div class="btn-row"><button class="choice-btn green" onclick="recordWater('done')">しました</button><button class="choice-btn gray" onclick="showExcuse()">言い訳をする</button></div>${excuseBlock}`
+      :`<div style="font-size:12px;color:#7a9a7a;margin-bottom:10px;">夜20時頃にまたお知らせします。</div><div class="btn-row"><button class="choice-btn green" onclick="recordWater('done')">やっぱりしました</button></div>`;
+    html=`<div class="water-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><div class="water-dot pending"></div><div style="font-size:13px;font-weight:600;color:#1a2e1a;">あとでする、と記録済み（${tw.time}）</div></div>${inner}<button class="fix-btn" onclick="resetTodayWater()">記録をリセットして最初から</button></div>`;
+  }else if(tw.status==='done'){
+    html=`<div class="water-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div class="water-dot done"></div><div><div style="font-size:14px;font-weight:600;color:#1a2e1a;">本日の水やり完了 ✓</div><div style="font-size:11px;color:#7a9a7a;">${tw.time}に記録</div></div></div>${tw.excuse?`<div style="font-size:12px;color:#7a9a7a;margin-top:8px;padding:9px 12px;background:#f8fcf8;border-radius:10px;border:1px solid #d0e8d0;">📝 ${tw.excuse}</div>`:''}<button class="fix-btn" onclick="resetTodayWater()">間違えた・修正する</button></div>`;
+  }else{
+    html=`<div class="water-card"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div class="water-dot skip"></div><div><div style="font-size:14px;font-weight:600;color:#1a2e1a;">本日は水やりなし</div><div style="font-size:11px;color:#7a9a7a;">${tw.time}に記録</div></div></div>${tw.excuse?`<div style="font-size:12px;color:#7a9a7a;margin-top:8px;padding:9px 12px;background:#f8fcf8;border-radius:10px;border:1px solid #d0e8d0;">📝 ${tw.excuse}</div>`:''}<button class="fix-btn" onclick="resetTodayWater()">間違えた・修正する</button></div>`;
+  }
+  document.getElementById('water-main').innerHTML=html;
+  const logEl=document.getElementById('water-log');
+  const past=waterLog.filter(w=>w.date!==todayStr).slice(0,14);
+  if(past.length===0){logEl.innerHTML='<div style="font-size:12px;color:#8aaa8a;">履歴はまだありません。</div>';return;}
+  const sLabel={done:'✓ した',skip:'— しなかった',pending:'△ 未確定'};
+  const sColor={done:'#3d9a5a',skip:'#c04040',pending:'#c09020'};
+  logEl.innerHTML=`<div class="card">${past.map(w=>`<div class="water-log-item"><div class="water-log-date">${w.date.slice(5).replace('-','/')}</div><div style="color:${sColor[w.status]||'#8aaa8a'};font-weight:600;">${sLabel[w.status]||w.status}</div>${w.excuse?`<div style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:4px;">📝${w.excuse}</div>`:''}</div>`).join('')}</div>`;
+}
+function showExcuse(){const el=document.getElementById('excuse-area');if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function submitExcuse(){const txt=(document.getElementById('excuse-text')?.value||'').trim();recordWater('skip',txt);}
+function renderPest(){
+  document.getElementById('pest-date').value=todayStr;
+  const list=document.getElementById('pest-list');
+  if(pestLog.length===0){list.innerHTML='<div class="empty-msg">まだ記録がありません。</div>';return;}
+  list.innerHTML=pestLog.map(p=>`<div class="pest-item"><div class="pest-date">${p.date.slice(5).replace('-','/')}</div><div style="flex:1;"><div class="pest-name">${p.name}</div>${p.memo?`<div class="pest-memo">📝 ${p.memo}</div>`:''}</div><button class="pest-del" onclick="deletePest('${p.id}')">削除</button></div>`).join('');
+}
+function addPest(){
+  const date=document.getElementById('pest-date').value;
+  const name=document.getElementById('pest-name').value.trim();
+  const memo=document.getElementById('pest-memo').value.trim();
+  if(!date||!name)return;
+  pestLog.unshift({id:Date.now().toString(),date,name,memo});
+  save(SK_PEST,pestLog);
+  document.getElementById('pest-name').value='';
+  document.getElementById('pest-memo').value='';
+  renderPest();
+}
+function deletePest(id){pestLog=pestLog.filter(p=>p.id!==id);save(SK_PEST,pestLog);renderPest();}
+function renderRecords(){
+  const list=document.getElementById('record-list');
+  if(records.length===0){list.innerHTML='<div class="empty-msg">記録がありません。</div>';return;}
+  list.innerHTML=records.map(rec=>{
+    const crop=crops.find(c=>c.id===rec.cropId);if(!crop)return'';
+    const e=daysDiff(rec.date);
+    const pct=Math.min(100,Math.round((e/crop.harvest)*100));
+    const fc=pct>=80?'past':e>=crop.germ-1&&e<=crop.germ+2?'near':'';
+    const badge=rec.type==='seedling'?'<span class="type-badge badge-seedling">苗</span>':'<span class="type-badge badge-seed">種</span>';
+    return`<div class="record-card"><div class="crop-icon">${crop.icon}</div><div style="flex:1;"><div class="record-name">${crop.name}${badge}${rec.memo?` · <span style="font-size:11px;font-weight:400;color:#8aaa8a;">${rec.memo}</span>`:''}</div><div class="record-sub">${rec.date} 作付 · ${e>=0?e+'日経過':'まだ'}</div><div class="progress-bar"><div class="progress-fill ${fc}" style="width:${pct}%"></div></div></div><button class="del-btn" onclick="deleteRecord('${rec.id}')">削除</button></div>`;
+  }).join('');
+}
+function deleteRecord(id){records=records.filter(r=>r.id!==id);save(SK_RECORDS,records);renderRecords();renderToday();}
+function renderAddForm(){
+  const sel=document.getElementById('add-crop-select');
+  sel.innerHTML='<option value="">-- 選んでください --</option>';
+  [{cat:'veg',label:'野菜'},{cat:'fruit',label:'果菜'}].forEach(({cat,label})=>{
+    const g=document.createElement('optgroup');g.label=label;
+    crops.filter(c=>c.cat===cat).forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.icon+' '+c.name;g.appendChild(o);});
+    sel.appendChild(g);
+  });
+  document.getElementById('add-date').value=todayStr;
+  setType('seed');
+}
+function addRecord(){
+  const cropId=document.getElementById('add-crop-select').value;
+  const date=document.getElementById('add-date').value;
+  const memo=document.getElementById('add-memo').value.trim();
+  if(!cropId||!date)return;
+  records.push({id:Date.now().toString(),cropId,date,memo,type:selectedType});
+  save(SK_RECORDS,records);
+  document.getElementById('add-memo').value='';
+  showTab('today');renderToday();
+}
+let editingCropId=null;
+function renderDB(){
+  const catLabel={veg:'野菜',fruit:'果菜'};
+  const catClass={veg:'db-cat-veg',fruit:'db-cat-fruit'};
+  document.getElementById('db-list').innerHTML=crops.map(c=>{
+    const isEditing=editingCropId===c.id;
+    return`<div><div class="crop-db-item"><div class="db-icon">${c.icon}</div><div class="db-name">${c.name}<span class="db-category ${catClass[c.cat]||'db-cat-veg'}">${catLabel[c.cat]||c.cat}</span></div><div class="db-days">発芽${c.germ}日/収穫${c.harvest}日</div><button class="db-edit-btn" onclick="toggleEdit('${c.id}')">${isEditing?'閉じる':'編集'}</button><button class="db-del-btn" onclick="deleteCrop('${c.id}')">削除</button></div>${isEditing?`<div class="edit-form"><input type="text" id="ef-name-${c.id}" value="${c.name}" placeholder="作物名"/><div class="edit-row"><input type="text" id="ef-germ-${c.id}" value="${c.germ}" placeholder="発芽日数"/><input type="text" id="ef-harvest-${c.id}" value="${c.harvest}" placeholder="収穫目安"/></div><select id="ef-cat-${c.id}" style="margin-top:6px;"><option value="veg" ${c.cat==='veg'?'selected':''}>野菜</option><option value="fruit" ${c.cat==='fruit'?'selected':''}>果菜</option></select><div style="margin-top:10px;"><button class="edit-save-btn" onclick="saveCropEdit('${c.id}')">保存</button><button class="edit-cancel-btn" onclick="toggleEdit(null)">キャンセル</button></div></div>`:''}</div>`;
+  }).join('');
+}
+function toggleEdit(id){editingCropId=editingCropId===id?null:id;renderDB();}
+function saveCropEdit(id){
+  const idx=crops.findIndex(c=>c.id===id);if(idx<0)return;
+  const name=document.getElementById(`ef-name-${id}`)?.value.trim();
+  const germ=parseInt(document.getElementById(`ef-germ-${id}`)?.value)||crops[idx].germ;
+  const harvest=parseInt(document.getElementById(`ef-harvest-${id}`)?.value)||crops[idx].harvest;
+  const cat=document.getElementById(`ef-cat-${id}`)?.value||crops[idx].cat;
+  if(name)crops[idx]={...crops[idx],name,germ,harvest,cat};
+  save(SK_CROPS,crops);editingCropId=null;renderDB();renderAddForm();
+}
+function deleteCrop(id){if(!confirm('このデータを削除しますか？'))return;crops=crops.filter(c=>c.id!==id);save(SK_CROPS,crops);renderDB();renderAddForm();}
+function addCustomCrop(){
+  const name=document.getElementById('new-name').value.trim();
+  const germ=parseInt(document.getElementById('new-germ').value)||7;
+  const harvest=parseInt(document.getElementById('new-harvest').value)||90;
+  const cat=document.getElementById('new-cat').value;
+  if(!name)return;
+  crops.push({id:'custom_'+Date.now(),name,icon:{veg:'🌱',fruit:'🍅'}[cat],germ,harvest,cat});
+  save(SK_CROPS,crops);
+  document.getElementById('new-name').value='';
+  document.getElementById('new-germ').value='';
+  document.getElementById('new-harvest').value='';
+  renderDB();renderAddForm();
+}
+function showTab(name){
+  ['today','water','pest','records','add','db'].forEach((t,i)=>{
+    document.getElementById('tab-'+t).style.display=t===name?'':'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('active',t===name);
+  });
+  if(name==='today')renderToday();
+  if(name==='water')renderWater();
+  if(name==='pest')renderPest();
+  if(name==='records')renderRecords();
+  if(name==='add')renderAddForm();
+  if(name==='db')renderDB();
+}
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+renderToday();
+</script>
+</body>
+</html>
