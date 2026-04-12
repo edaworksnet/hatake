@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -101,12 +102,24 @@ textarea{resize:vertical;min-height:64px;}
 .badge-seed{background:#e0f5e0;color:#2d6a2d;}
 .badge-seedling{background:#fff0d0;color:#7a4000;}
 .empty-msg{text-align:center;padding:2.5rem 1rem;color:#8aaa8a;font-size:13px;line-height:1.8;}
+.hatake-menu-btn{margin-left:auto;background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;width:32px;height:32px;font-size:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.hatake-menu-btn:active{background:rgba(255,255,255,0.3);}
+.hm-overlay{position:fixed;inset:0;background:rgba(45,90,45,0.3);z-index:100;backdrop-filter:blur(2px);}
+.hm-sheet{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#fff;border-radius:16px 16px 0 0;padding:16px 20px 28px;z-index:101;border-top:2px solid #c8e8c8;box-shadow:0 -8px 30px rgba(45,90,45,0.15);}
+.hm-handle{width:36px;height:4px;background:#d0e0d0;border-radius:2px;margin:0 auto 14px;}
+.hm-title{font-size:14px;font-weight:700;color:#2d5a2d;margin-bottom:12px;}
+.hm-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;background:#f0f4f0;border:1px solid #d0e0d0;margin-bottom:8px;font-size:13px;font-weight:600;color:#1a2e1a;cursor:pointer;width:100%;text-align:left;}
+.hm-item:active{background:#e0e8e0;}
+.hm-item .hm-icon{font-size:18px;width:24px;text-align:center;}
+.hm-item .hm-desc{font-size:10px;font-weight:400;color:#7a9a7a;margin-top:1px;}
+.hm-cancel{width:100%;padding:12px 0;border-radius:10px;border:1px solid #d0e0d0;background:#fff;color:#7a9a7a;font-size:13px;font-weight:600;margin-top:4px;cursor:pointer;}
+.hm-file-input{display:none;}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="app-header">
-    <div class="app-title">🌿 畑の管理帳</div>
+    <div class="app-title">🌿 畑の管理帳<button class="hatake-menu-btn" onclick="toggleHatakeMenu()">☰</button></div>
     <div class="tabs">
       <div class="tab active" onclick="showTab('today')">今日の畑</div>
       <div class="tab" onclick="showTab('water')">水やり</div>
@@ -248,7 +261,7 @@ function renderToday(){
   if(!tw&&nowH>=12)msgs.push('本日の水やりがまだ記録されていません。');
   if(tw&&tw.status==='pending'&&nowH>=20)msgs.push('水やり、その後いかがでしたか？');
   const msg=msgs.length>0?msgs.join(' '):records.length===0?'まだ作付記録がありません。「記録する」から追加してください。':'本日も畑の管理、お疲れ様でございます。';
-  document.getElementById('char-bubble-area').innerHTML=`<div class="char-bubble"><div class="char-face">🎩</div><div><div class="bubble-name">執事ヴィンセント</div><div class="bubble-text">${msg}</div></div></div>`;
+  document.getElementById('char-bubble-area').innerHTML=`<div class="char-bubble"><div class="char-face">🐣</div><div><div class="bubble-name">ナビゲーター</div><div class="bubble-text">${msg}</div></div></div>`;
   document.getElementById('today-date').textContent=`${todayD.getFullYear()}年${todayD.getMonth()+1}月${todayD.getDate()}日`;
   const list=document.getElementById('today-list');
   if(records.length===0){list.innerHTML='<div class="empty-msg">まだ記録がありません。<br>「記録する」タブから作付日を登録しましょう。</div>';return;}
@@ -400,6 +413,136 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   });
 }
+
+let hatakeMenuOpen=false;
+function toggleHatakeMenu(){
+  hatakeMenuOpen=!hatakeMenuOpen;
+  renderHatakeMenu();
+}
+function renderHatakeMenu(){
+  let el=document.getElementById('hatake-menu');
+  if(el)el.remove();
+  if(!hatakeMenuOpen)return;
+  const div=document.createElement('div');
+  div.id='hatake-menu';
+  div.innerHTML=`<div class="hm-overlay" onclick="toggleHatakeMenu()"></div>
+  <div class="hm-sheet" onclick="event.stopPropagation()">
+    <div class="hm-handle"></div>
+    <div class="hm-title">データ管理</div>
+    <button class="hm-item" onclick="hatakeExportJSON()">
+      <span class="hm-icon">📦</span>
+      <div><div>バックアップ (JSON)</div><div class="hm-desc">全データをエクスポート</div></div>
+    </button>
+    <button class="hm-item" onclick="hatakeTriggerImport()">
+      <span class="hm-icon">📥</span>
+      <div><div>インポート (JSON)</div><div class="hm-desc">バックアップファイルから復元</div></div>
+    </button>
+    <button class="hm-item" onclick="hatakeExportCSV()">
+      <span class="hm-icon">📊</span>
+      <div><div>CSV出力</div><div class="hm-desc">作付記録をExcelで開ける形式で書き出し</div></div>
+    </button>
+    <button class="hm-cancel" onclick="toggleHatakeMenu()">閉じる</button>
+  </div>
+  <input type="file" accept=".json" class="hm-file-input" id="hatakeImportInput" onchange="hatakeHandleImport(event)">`;
+  document.body.appendChild(div);
+}
+
+function hatakeDownload(filename, content, type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; document.body.appendChild(a);
+  a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function hatakeExportJSON(){
+  const data={
+    crops: crops,
+    records: records,
+    waterLog: waterLog,
+    pestLog: pestLog,
+    exportDate: new Date().toISOString(),
+    version: 1
+  };
+  const json=JSON.stringify(data, null, 2);
+  const date=todayStr;
+  hatakeDownload(`hatake_backup_${date}.json`, json, 'application/json');
+  hatakeMenuOpen=false; renderHatakeMenu();
+}
+
+function hatakeTriggerImport(){
+  hatakeMenuOpen=false; renderHatakeMenu();
+  setTimeout(()=>{
+    let inp=document.getElementById('hatakeImportInput');
+    if(!inp){
+      inp=document.createElement('input');
+      inp.type='file'; inp.accept='.json'; inp.className='hm-file-input';
+      inp.id='hatakeImportInput';
+      inp.onchange=hatakeHandleImport;
+      document.body.appendChild(inp);
+    }
+    inp.click();
+  },100);
+}
+
+function hatakeHandleImport(e){
+  const file=e.target?e.target.files[0]:e.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.crops&&!data.records&&!data.waterLog&&!data.pestLog){
+        alert('無効なファイル形式です'); return;
+      }
+      const counts=[];
+      if(data.crops)counts.push(`作物データ: ${data.crops.length}件`);
+      if(data.records)counts.push(`作付記録: ${data.records.length}件`);
+      if(data.waterLog)counts.push(`水やり履歴: ${data.waterLog.length}件`);
+      if(data.pestLog)counts.push(`農薬記録: ${data.pestLog.length}件`);
+      if(!confirm(`以下のデータをインポートします。\n${counts.join('\n')}\n\n現在のデータは上書きされます。\nよろしいですか？`))return;
+      if(data.crops){crops=data.crops; save(SK_CROPS,crops);}
+      if(data.records){records=data.records; save(SK_RECORDS,records);}
+      if(data.waterLog){waterLog=data.waterLog; save(SK_WATER,waterLog);}
+      if(data.pestLog){pestLog=data.pestLog; save(SK_PEST,pestLog);}
+      showTab('today');
+      alert('インポートが完了しました');
+    }catch(err){
+      alert('ファイルの読み込みに失敗しました');
+    }
+  };
+  reader.readAsText(file);
+  if(e.target)e.target.value='';
+}
+
+function hatakeCsvEscape(s){
+  s=String(s||'');
+  if(s.includes(',')||s.includes('"')||s.includes('\n'))return '"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+
+function hatakeExportCSV(){
+  const header=['作物名','種/苗','作付日','経過日数','発芽日数','収穫目安日数','メモ'];
+  const rows=records.map(rec=>{
+    const crop=crops.find(c=>c.id===rec.cropId);
+    const e=daysDiff(rec.date);
+    return [
+      hatakeCsvEscape(crop?crop.name:'不明'),
+      rec.type==='seedling'?'苗':'種',
+      rec.date,
+      e>=0?e:'未開始',
+      crop?crop.germ:'',
+      crop?crop.harvest:'',
+      hatakeCsvEscape(rec.memo||'')
+    ].join(',');
+  });
+  const bom='\uFEFF';
+  const csv=bom+header.join(',')+'\n'+rows.join('\n');
+  const date=todayStr;
+  hatakeDownload(`hatake_records_${date}.csv`, csv, 'text/csv;charset=utf-8');
+  hatakeMenuOpen=false; renderHatakeMenu();
+}
+
 renderToday();
 </script>
 </body>
