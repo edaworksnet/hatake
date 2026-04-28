@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -181,7 +180,10 @@ textarea{resize:vertical;min-height:64px;}
         <input type="text" id="new-name" placeholder="作物名（例: スイカ）" style="margin-bottom:8px;"/>
         <div class="row2">
           <input type="text" id="new-germ" placeholder="発芽日数（例: 7）"/>
-          <input type="text" id="new-harvest" placeholder="収穫目安（例: 90）"/>
+          <input type="text" id="new-harvest" placeholder="収穫目安・種から（例: 90）"/>
+        </div>
+        <div class="row2" style="margin-top:8px;">
+          <input type="text" id="new-seedling-harvest" placeholder="収穫目安・定植から（任意）"/>
         </div>
         <select id="new-cat" style="margin-top:8px;">
           <option value="veg">野菜</option>
@@ -201,36 +203,44 @@ const SK_CROPS='tane_crops_v3';
 const SK_WATER='tane_water_v3';
 const SK_PEST='tane_pest_v1';
 const DEFAULT_CROPS=[
-  {id:'komatsuna',name:'小松菜',icon:'🥬',germ:4,harvest:40,cat:'veg'},
-  {id:'spinach',name:'ほうれん草',icon:'🌿',germ:7,harvest:50,cat:'veg'},
-  {id:'radish',name:'ラディッシュ',icon:'🌱',germ:4,harvest:25,cat:'veg'},
-  {id:'carrot',name:'にんじん',icon:'🥕',germ:10,harvest:100,cat:'veg'},
-  {id:'daikon',name:'大根',icon:'🌱',germ:5,harvest:60,cat:'veg'},
-  {id:'turnip',name:'かぶ',icon:'🌱',germ:5,harvest:50,cat:'veg'},
-  {id:'lettuce',name:'レタス',icon:'🥗',germ:5,harvest:60,cat:'veg'},
-  {id:'cabbage',name:'キャベツ',icon:'🥦',germ:5,harvest:90,cat:'veg'},
-  {id:'broccoli',name:'ブロッコリー',icon:'🥦',germ:5,harvest:90,cat:'veg'},
-  {id:'onion',name:'玉ねぎ',icon:'🧅',germ:10,harvest:180,cat:'veg'},
-  {id:'leek',name:'長ネギ',icon:'🌿',germ:10,harvest:120,cat:'veg'},
-  {id:'edamame',name:'枝豆',icon:'🫘',germ:7,harvest:80,cat:'veg'},
-  {id:'basil',name:'バジル',icon:'🌿',germ:7,harvest:60,cat:'veg'},
-  {id:'shiso',name:'大葉（しそ）',icon:'🌿',germ:7,harvest:60,cat:'veg'},
-  {id:'ginger',name:'しょうが',icon:'🌱',germ:21,harvest:150,cat:'veg'},
-  {id:'potato',name:'じゃがいも',icon:'🥔',germ:14,harvest:100,cat:'veg'},
-  {id:'sweetpotato',name:'さつまいも',icon:'🍠',germ:14,harvest:120,cat:'veg'},
-  {id:'cucumber',name:'きゅうり',icon:'🥒',germ:5,harvest:60,cat:'fruit'},
-  {id:'tomato',name:'トマト',icon:'🍅',germ:7,harvest:80,cat:'fruit'},
-  {id:'minito',name:'ミニトマト',icon:'🍅',germ:7,harvest:75,cat:'fruit'},
-  {id:'eggplant',name:'なす',icon:'🍆',germ:10,harvest:75,cat:'fruit'},
-  {id:'pepper',name:'ピーマン',icon:'🫑',germ:10,harvest:80,cat:'fruit'},
-  {id:'pumpkin',name:'かぼちゃ',icon:'🎃',germ:7,harvest:100,cat:'fruit'},
-  {id:'watermelon',name:'スイカ',icon:'🍉',germ:7,harvest:90,cat:'fruit'},
-  {id:'corn',name:'とうもろこし',icon:'🌽',germ:5,harvest:85,cat:'fruit'},
-  {id:'strawberry',name:'いちご',icon:'🍓',germ:14,harvest:180,cat:'fruit'},
+  // seedlingHarvest = 定植から収穫までの目安日数（苗購入・ポット育苗から定植した場合）
+  {id:'komatsuna',name:'小松菜',icon:'🥬',germ:4,harvest:40,seedlingHarvest:25,cat:'veg'},
+  {id:'spinach',name:'ほうれん草',icon:'🌿',germ:7,harvest:50,seedlingHarvest:30,cat:'veg'},
+  {id:'radish',name:'ラディッシュ',icon:'🌱',germ:4,harvest:25,seedlingHarvest:18,cat:'veg'},
+  {id:'carrot',name:'にんじん',icon:'🥕',germ:10,harvest:100,seedlingHarvest:70,cat:'veg'},
+  {id:'daikon',name:'大根',icon:'🌱',germ:5,harvest:60,seedlingHarvest:45,cat:'veg'},
+  {id:'turnip',name:'かぶ',icon:'🌱',germ:5,harvest:50,seedlingHarvest:35,cat:'veg'},
+  {id:'lettuce',name:'レタス',icon:'🥗',germ:5,harvest:60,seedlingHarvest:35,cat:'veg'},
+  {id:'cabbage',name:'キャベツ',icon:'🥦',germ:5,harvest:90,seedlingHarvest:60,cat:'veg'},
+  {id:'broccoli',name:'ブロッコリー',icon:'🥦',germ:5,harvest:90,seedlingHarvest:60,cat:'veg'},
+  {id:'onion',name:'玉ねぎ',icon:'🧅',germ:10,harvest:180,seedlingHarvest:120,cat:'veg'},
+  {id:'leek',name:'長ネギ',icon:'🌿',germ:10,harvest:120,seedlingHarvest:90,cat:'veg'},
+  {id:'edamame',name:'枝豆',icon:'🫘',germ:7,harvest:80,seedlingHarvest:55,cat:'veg'},
+  {id:'basil',name:'バジル',icon:'🌿',germ:7,harvest:60,seedlingHarvest:30,cat:'veg'},
+  {id:'shiso',name:'大葉（しそ）',icon:'🌿',germ:7,harvest:60,seedlingHarvest:30,cat:'veg'},
+  {id:'ginger',name:'しょうが',icon:'🌱',germ:21,harvest:150,seedlingHarvest:120,cat:'veg'},
+  {id:'potato',name:'じゃがいも',icon:'🥔',germ:14,harvest:100,seedlingHarvest:80,cat:'veg'},
+  {id:'sweetpotato',name:'さつまいも',icon:'🍠',germ:14,harvest:120,seedlingHarvest:100,cat:'veg'},
+  {id:'cucumber',name:'きゅうり',icon:'🥒',germ:5,harvest:60,seedlingHarvest:40,cat:'fruit'},
+  {id:'tomato',name:'トマト',icon:'🍅',germ:7,harvest:80,seedlingHarvest:50,cat:'fruit'},
+  {id:'minito',name:'ミニトマト',icon:'🍅',germ:7,harvest:75,seedlingHarvest:45,cat:'fruit'},
+  {id:'eggplant',name:'なす',icon:'🍆',germ:10,harvest:75,seedlingHarvest:50,cat:'fruit'},
+  {id:'pepper',name:'ピーマン',icon:'🫑',germ:10,harvest:80,seedlingHarvest:55,cat:'fruit'},
+  {id:'pumpkin',name:'かぼちゃ',icon:'🎃',germ:7,harvest:100,seedlingHarvest:55,cat:'fruit'},
+  {id:'watermelon',name:'スイカ',icon:'🍉',germ:7,harvest:90,seedlingHarvest:55,cat:'fruit'},
+  {id:'corn',name:'とうもろこし',icon:'🌽',germ:5,harvest:85,seedlingHarvest:60,cat:'fruit'},
+  {id:'strawberry',name:'いちご',icon:'🍓',germ:14,harvest:180,seedlingHarvest:150,cat:'fruit'},
 ];
 function load(k,d){try{const s=localStorage.getItem(k);return s?JSON.parse(s):d;}catch(e){return d;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 let crops=load(SK_CROPS,DEFAULT_CROPS.slice());
+// seedlingHarvestが未設定の既存データにデフォルト値をマージ
+crops=crops.map(c=>{
+  if(c.seedlingHarvest!==undefined)return c;
+  const def=DEFAULT_CROPS.find(d=>d.id===c.id);
+  return def&&def.seedlingHarvest?{...c,seedlingHarvest:def.seedlingHarvest}:c;
+});
+save(SK_CROPS,crops);
 let records=load(SK_RECORDS,[]);
 let waterLog=load(SK_WATER,[]);
 let pestLog=load(SK_PEST,[]);
@@ -242,15 +252,17 @@ function getAlertMsg(rec){
   const crop=crops.find(c=>c.id===rec.cropId);if(!crop)return null;
   const e=daysDiff(rec.date);const{germ,harvest}=crop;
   const isSeedling=rec.type==='seedling';
+  // 苗の場合はseedlingHarvestを優先。なければharvestをそのまま使用
+  const effectiveHarvest=isSeedling?(crop.seedlingHarvest||harvest):harvest;
   if(e<0)return{type:'info',msg:`作付は${Math.abs(e)}日後です。`,day:null};
   if(e===0)return{type:'info',msg:`今日${isSeedling?'定植':'種まき'}しましたね！記録しました。`,day:'今日'};
   if(!isSeedling){
     if(e<germ-1)return{type:'info',msg:`発芽まであと${germ-e}日ほど。引き続き水やりを。`,day:`${e}日目`};
     if(e>=germ-1&&e<=germ+2)return{type:'warn',msg:'そろそろ発芽する頃です。畑を見に行ってみましょう！',day:`${e}日目（発芽予定±2日）`};
   }
-  if(e<harvest*0.8)return{type:'done',msg:isSeedling?'定植後、順調に育っていますように。':'発芽済みの頃。順調に育っていますように。',day:`${e}日目`};
-  if(e>=harvest*0.8&&e<=harvest+10)return{type:'warn',msg:'収穫時期が近づいています！そろそろ確認を。',day:`${e}日目（収穫目安：${harvest}日）`};
-  if(e>harvest+10)return{type:'warn',msg:'収穫目安を過ぎました。早めに確認してください。',day:`${e}日目（収穫目安超過）`};
+  if(e<effectiveHarvest*0.8)return{type:'done',msg:isSeedling?'定植後、順調に育っていますように。':'発芽済みの頃。順調に育っていますように。',day:`${e}日目`};
+  if(e>=effectiveHarvest*0.8&&e<=effectiveHarvest+10)return{type:'warn',msg:'収穫時期が近づいています！そろそろ確認を。',day:`${e}日目（収穫目安：${effectiveHarvest}日）`};
+  if(e>effectiveHarvest+10)return{type:'warn',msg:'収穫目安を過ぎました。早めに確認してください。',day:`${e}日目（収穫目安超過）`};
   return{type:'done',msg:'記録中です。',day:`${e}日目`};
 }
 function renderToday(){
@@ -369,7 +381,8 @@ function renderDB(){
   const catClass={veg:'db-cat-veg',fruit:'db-cat-fruit'};
   document.getElementById('db-list').innerHTML=crops.map(c=>{
     const isEditing=editingCropId===c.id;
-    return`<div><div class="crop-db-item"><div class="db-icon">${c.icon}</div><div class="db-name">${c.name}<span class="db-category ${catClass[c.cat]||'db-cat-veg'}">${catLabel[c.cat]||c.cat}</span></div><div class="db-days">発芽${c.germ}日/収穫${c.harvest}日</div><button class="db-edit-btn" onclick="toggleEdit('${c.id}')">${isEditing?'閉じる':'編集'}</button><button class="db-del-btn" onclick="deleteCrop('${c.id}')">削除</button></div>${isEditing?`<div class="edit-form"><input type="text" id="ef-name-${c.id}" value="${c.name}" placeholder="作物名"/><div class="edit-row"><input type="text" id="ef-germ-${c.id}" value="${c.germ}" placeholder="発芽日数"/><input type="text" id="ef-harvest-${c.id}" value="${c.harvest}" placeholder="収穫目安"/></div><select id="ef-cat-${c.id}" style="margin-top:6px;"><option value="veg" ${c.cat==='veg'?'selected':''}>野菜</option><option value="fruit" ${c.cat==='fruit'?'selected':''}>果菜</option></select><div style="margin-top:10px;"><button class="edit-save-btn" onclick="saveCropEdit('${c.id}')">保存</button><button class="edit-cancel-btn" onclick="toggleEdit(null)">キャンセル</button></div></div>`:''}</div>`;
+    const shLabel=c.seedlingHarvest?`／苗${c.seedlingHarvest}日`:'';
+    return`<div><div class="crop-db-item"><div class="db-icon">${c.icon}</div><div class="db-name">${c.name}<span class="db-category ${catClass[c.cat]||'db-cat-veg'}">${catLabel[c.cat]||c.cat}</span></div><div class="db-days">発芽${c.germ}日/種→収穫${c.harvest}日${shLabel}</div><button class="db-edit-btn" onclick="toggleEdit('${c.id}')">${isEditing?'閉じる':'編集'}</button><button class="db-del-btn" onclick="deleteCrop('${c.id}')">削除</button></div>${isEditing?`<div class="edit-form"><input type="text" id="ef-name-${c.id}" value="${c.name}" placeholder="作物名"/><div class="edit-row"><input type="text" id="ef-germ-${c.id}" value="${c.germ}" placeholder="発芽日数"/><input type="text" id="ef-harvest-${c.id}" value="${c.harvest}" placeholder="収穫目安（種まきから）"/></div><div class="edit-row" style="margin-top:7px;"><input type="text" id="ef-sh-${c.id}" value="${c.seedlingHarvest||''}" placeholder="収穫目安（定植から・任意）"/></div><select id="ef-cat-${c.id}" style="margin-top:6px;"><option value="veg" ${c.cat==='veg'?'selected':''}>野菜</option><option value="fruit" ${c.cat==='fruit'?'selected':''}>果菜</option></select><div style="margin-top:10px;"><button class="edit-save-btn" onclick="saveCropEdit('${c.id}')">保存</button><button class="edit-cancel-btn" onclick="toggleEdit(null)">キャンセル</button></div></div>`:''}</div>`;
   }).join('');
 }
 function toggleEdit(id){editingCropId=editingCropId===id?null:id;renderDB();}
@@ -378,8 +391,10 @@ function saveCropEdit(id){
   const name=document.getElementById(`ef-name-${id}`)?.value.trim();
   const germ=parseInt(document.getElementById(`ef-germ-${id}`)?.value)||crops[idx].germ;
   const harvest=parseInt(document.getElementById(`ef-harvest-${id}`)?.value)||crops[idx].harvest;
+  const shVal=document.getElementById(`ef-sh-${id}`)?.value.trim();
+  const seedlingHarvest=shVal?parseInt(shVal)||undefined:undefined;
   const cat=document.getElementById(`ef-cat-${id}`)?.value||crops[idx].cat;
-  if(name)crops[idx]={...crops[idx],name,germ,harvest,cat};
+  if(name)crops[idx]={...crops[idx],name,germ,harvest,seedlingHarvest,cat};
   save(SK_CROPS,crops);editingCropId=null;renderDB();renderAddForm();
 }
 function deleteCrop(id){if(!confirm('このデータを削除しますか？'))return;crops=crops.filter(c=>c.id!==id);save(SK_CROPS,crops);renderDB();renderAddForm();}
@@ -387,13 +402,18 @@ function addCustomCrop(){
   const name=document.getElementById('new-name').value.trim();
   const germ=parseInt(document.getElementById('new-germ').value)||7;
   const harvest=parseInt(document.getElementById('new-harvest').value)||90;
+  const shVal=document.getElementById('new-seedling-harvest').value.trim();
+  const seedlingHarvest=shVal?parseInt(shVal)||undefined:undefined;
   const cat=document.getElementById('new-cat').value;
   if(!name)return;
-  crops.push({id:'custom_'+Date.now(),name,icon:{veg:'🌱',fruit:'🍅'}[cat],germ,harvest,cat});
+  const newCrop={id:'custom_'+Date.now(),name,icon:{veg:'🌱',fruit:'🍅'}[cat],germ,harvest,cat};
+  if(seedlingHarvest)newCrop.seedlingHarvest=seedlingHarvest;
+  crops.push(newCrop);
   save(SK_CROPS,crops);
   document.getElementById('new-name').value='';
   document.getElementById('new-germ').value='';
   document.getElementById('new-harvest').value='';
+  document.getElementById('new-seedling-harvest').value='';
   renderDB();renderAddForm();
 }
 function showTab(name){
@@ -522,7 +542,7 @@ function hatakeCsvEscape(s){
 }
 
 function hatakeExportCSV(){
-  const header=['作物名','種/苗','作付日','経過日数','発芽日数','収穫目安日数','メモ'];
+  const header=['作物名','種/苗','作付日','経過日数','発芽日数','収穫目安日数（種から）','収穫目安日数（定植から）','メモ'];
   const rows=records.map(rec=>{
     const crop=crops.find(c=>c.id===rec.cropId);
     const e=daysDiff(rec.date);
@@ -533,6 +553,7 @@ function hatakeExportCSV(){
       e>=0?e:'未開始',
       crop?crop.germ:'',
       crop?crop.harvest:'',
+      crop?(crop.seedlingHarvest||''):'',
       hatakeCsvEscape(rec.memo||'')
     ].join(',');
   });
